@@ -1,0 +1,152 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  TEACHER
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+model User {
+  id              String    @id @default(uuid())
+  name            String?
+  email           String?   @unique
+  emailVerified   DateTime?
+  image           String?
+  hashedPassword  String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  role            UserRole  @default(ADMIN)
+
+  teacher         Teacher?
+}
+
+model Teacher {
+  id              String   @id @default(uuid())
+  name            String
+  lastName        String
+
+  userId          String?   @unique
+  user            User?     @relation(fields: [userId], references: [id])
+  
+  courses         Course[]
+  teacherImages   TeacherImage[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model TeacherImage {
+  id         String   @id @default(uuid())
+  url        String
+  
+  teacherId  String
+  teacher    Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Student {
+  id              String   @id @default(uuid())
+  name            String
+  fatherName      String
+  rollNo          Int      @unique
+
+  gradeId         String
+  grade           Grade    @relation(fields: [gradeId], references: [id])
+  
+  studentImages   StudentImage[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  Attendance Attendance[]
+}
+
+model StudentImage {
+  id         String   @id @default(uuid())
+  url        String
+  
+  studentId  String
+  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Grade {
+  id          String     @id @default(uuid())
+  title       String     @unique
+
+  students    Student[]
+  courses     Course[]
+  classrooms  Classroom[]
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Course {
+  id          String   @id @default(uuid())
+  title       String    
+
+  teacherId   String?   
+  teacher     Teacher?  @relation(fields: [teacherId], references: [id])
+
+  gradeId     String?
+  grade       Grade?    @relation(fields: [gradeId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  Attendance Attendance[]
+}
+
+model Classroom {
+  id        String    @id @default(uuid())
+  label     String    // e.g., "Room A", "Virtual Room 3"
+  
+  gradeId   String
+  grade     Grade     @relation(fields: [gradeId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+
+model Attendance {
+  id                String           @id @default(uuid())
+  
+  date              DateTime         // The date for which attendance is being recorded
+  status            AttendanceStatus @default(PRESENT)
+  
+  studentId         String
+  student           Student          @relation(fields: [studentId], references: [id])
+  
+  courseId          String
+  course            Course           @relation(fields: [courseId], references: [id])
+  
+  notes             String?          // Optional notes about the attendance
+  
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  
+  @@unique([date, studentId, courseId]) // Ensures no duplicate attendance records
+}
+
