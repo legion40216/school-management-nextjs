@@ -1,5 +1,6 @@
 import React from 'react'
 import Client from './_components/client';
+import prisma from '@/lib/prismadb';
 import { currentUser } from '@/hooks/server-auth-utils';
 import { checkRoleAndRedirect } from '@/hooks/use-redirect-role';
 import { unauthorized } from 'next/navigation';

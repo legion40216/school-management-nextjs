@@ -1,5 +1,6 @@
 import React from 'react'
 import Client from './_components/client';
+import prisma from '@/lib/prismadb';
 
 export default async function page() {
 
